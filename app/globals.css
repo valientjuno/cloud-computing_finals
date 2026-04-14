@@ -1,0 +1,52 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Lora:ital@0;1&family=DM+Mono:wght@400;500&display=swap");
+
+:root {
+  --ink: #1a1410;
+  --paper: #f5f0e8;
+  --paper-dark: #ede6d6;
+  --amber: #c8873a;
+  --muted: #7a6f62;
+  --card-bg: #fffdf8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+textarea,
+input,
+select {
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
