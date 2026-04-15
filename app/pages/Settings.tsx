@@ -1,251 +1,242 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import type { User, Entry, Collection, Page } from "../types";
-import { MOODS, MOOD_LABELS, COLLECTION_COLORS, COLLECTION_EMOJIS, SAMPLE_ENTRIES } from "../constants";
-import { storage, fmtDate, fmtShort, excerpt, uid, streakCount, isoDay } from "../utils";
-import { Logo } from "../components/Logo";
-import { Avatar } from "../components/Avatar";
-import { MoodPicker } from "../components/MoodPicker";
-import { TagInput } from "../components/TagInput";
-import { EntryCard } from "../components/EntryCard";
-import { AppNav } from "../components/AppNav";
 
-function Settings({
-  user,
-  onUpdate,
-  onBack,
-  onLogout,
-}: {
+import { useState } from "react";
+import type { User } from "../types";
+
+type SettingsProps = {
   user: User;
-  onUpdate: (u: User) => void;
+  onUpdate: (user: User) => void;
   onBack: () => void;
   onLogout: () => void;
-}) {
+};
+
+export function Settings({ user, onUpdate, onBack, onLogout }: SettingsProps) {
   const [name, setName] = useState(user.name);
-  const [pass, setPass] = useState("");
-  const [passConf, setPassConf] = useState("");
-  const [notif, setNotif] = useState(user.notifications);
-  const [saved, setSaved] = useState(false);
-  const save = () => {
-    if (pass && pass !== passConf) {
-      _toast?.("Passwords don't match", "err");
-      return;
-    }
-    if (pass && pass.length < 6) {
-      _toast?.("Password must be 6+ characters", "err");
-      return;
-    }
-    const updated = {
-      ...user,
-      name: name || user.name,
-      password: pass || user.password,
-      notifications: notif,
-    };
-    const users: User[] = storage.get("folio_users") || [];
-    storage.set(
-      "folio_users",
-      users.map((u) => (u.id === user.id ? updated : u)),
-    );
-    onUpdate(updated);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    _toast?.("Settings saved ✓");
+  const [email, setEmail] = useState(user.email);
+  const [notifications, setNotifications] = useState(user.notifications);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "10px",
+    border: "1px solid #d1d5db",
+    background: "#ffffff",
+    color: "#111827",
+    outline: "none",
   };
+
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    marginBottom: "6px",
+    fontWeight: 600,
+    color: "#111827",
+  };
+
+  const sectionStyle: React.CSSProperties = {
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "16px",
+    padding: "20px",
+    marginBottom: "16px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+  };
+
+  const saveProfile = async () => {
+    try {
+      setSaving(true);
+      setMessage("");
+
+      onUpdate({
+        ...user,
+        name,
+        email,
+        notifications,
+      });
+
+      setMessage("Settings updated.");
+    } catch (error) {
+      console.error("Settings update error:", error);
+      setMessage("Could not update settings.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: "var(--paper)" }}>
-      <nav
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+        padding: "24px",
+      }}
+    >
+      <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "1rem 5%",
-          borderBottom: "1px solid rgba(26,20,16,0.08)",
-          position: "sticky",
-          top: 0,
-          background: "rgba(245,240,232,0.95)",
-          backdropFilter: "blur(12px)",
-          zIndex: 100,
+          maxWidth: "720px",
+          margin: "0 auto",
         }}
       >
         <button
           onClick={onBack}
           style={{
-            background: "none",
+            marginBottom: "20px",
+            background: "transparent",
             border: "none",
+            color: "#374151",
             cursor: "pointer",
-            fontFamily: "'DM Mono',monospace",
-            fontSize: "0.72rem",
-            color: "#7a6f62",
-            padding: 0,
+            fontSize: "15px",
           }}
         >
           ← Back
         </button>
-        <Logo onClick={onBack} />
-        <div style={{ width: 60 }} />
-      </nav>
-      <main style={{ maxWidth: 560, margin: "0 auto", padding: "3rem 5%" }}>
+
         <h1
           style={{
-            fontFamily: "'Playfair Display',serif",
-            fontSize: "1.8rem",
-            fontWeight: 700,
-            marginBottom: "0.4rem",
-            color: "var(--ink)",
+            fontSize: "32px",
+            marginBottom: "8px",
+            color: "#111827",
           }}
         >
           Settings
         </h1>
+
         <p
           style={{
-            fontFamily: "'DM Mono',monospace",
-            fontSize: "0.72rem",
-            color: "#7a6f62",
-            marginBottom: "2.5rem",
+            marginBottom: "24px",
+            color: "#6b7280",
           }}
         >
-          {user.email}
+          Manage your profile and preferences.
         </p>
-        {[
-          {
-            label: "Display name",
-            val: name,
-            set: setName,
-            type: "text",
-            ph: "Your name",
-          },
-          {
-            label: "New password",
-            val: pass,
-            set: setPass,
-            type: "password",
-            ph: "Leave blank to keep current",
-          },
-          {
-            label: "Confirm password",
-            val: passConf,
-            set: setPassConf,
-            type: "password",
-            ph: "Repeat new password",
-          },
-        ].map((f) => (
-          <div key={f.label} style={{ marginBottom: "1.2rem" }}>
-            <label
-              style={{
-                display: "block",
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "0.68rem",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#7a6f62",
-                marginBottom: "0.4rem",
-              }}
-            >
-              {f.label}
+
+        <section style={sectionStyle}>
+          <h2
+            style={{
+              fontSize: "20px",
+              marginBottom: "16px",
+              color: "#111827",
+            }}
+          >
+            Profile
+          </h2>
+
+          <div style={{ marginBottom: "14px" }}>
+            <label htmlFor="settings-name" style={labelStyle}>
+              Name
             </label>
             <input
-              value={f.val}
-              onChange={(e) => f.set(e.target.value)}
-              type={f.type}
-              placeholder={f.ph}
-              style={{ ...inputStyle, width: "100%" }}
+              id="settings-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={inputStyle}
             />
           </div>
-        ))}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "1rem 0",
-            borderTop: "1px solid rgba(26,20,16,0.08)",
-            borderBottom: "1px solid rgba(26,20,16,0.08)",
-            marginBottom: "2rem",
-          }}
-        >
-          <div>
-            <p
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "0.75rem",
-                color: "#1a1410",
-                marginBottom: "0.2rem",
-              }}
-            >
-              Daily reminders
-            </p>
-            <p
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "0.68rem",
-                color: "#7a6f62",
-              }}
-            >
-              Gentle nudge to write each day
-            </p>
+
+          <div style={{ marginBottom: "14px" }}>
+            <label htmlFor="settings-email" style={labelStyle}>
+              Email
+            </label>
+            <input
+              id="settings-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={inputStyle}
+            />
           </div>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginTop: "8px",
+              color: "#111827",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={notifications}
+              onChange={(e) => setNotifications(e.target.checked)}
+            />
+            Enable notifications
+          </label>
+        </section>
+
+        <section style={sectionStyle}>
+          <h2
+            style={{
+              fontSize: "20px",
+              marginBottom: "12px",
+              color: "#111827",
+            }}
+          >
+            Account
+          </h2>
+
+          <p
+            style={{
+              marginBottom: "16px",
+              color: "#6b7280",
+            }}
+          >
+            You are signed in as <strong>{user.email}</strong>.
+          </p>
+
           <div
-            onClick={() => setNotif((o) => !o)}
             style={{
-              width: 44,
-              height: 24,
-              borderRadius: 12,
-              background: notif ? "#c8873a" : "rgba(26,20,16,0.15)",
-              cursor: "pointer",
-              position: "relative",
-              transition: "background 0.25s",
+              display: "flex",
+              gap: "12px",
+              flexWrap: "wrap",
             }}
           >
-            <div
+            <button
+              onClick={saveProfile}
+              disabled={saving}
               style={{
-                width: 18,
-                height: 18,
-                borderRadius: 9,
-                background: "#fff",
-                position: "absolute",
-                top: 3,
-                left: notif ? "calc(100% - 21px)" : 3,
-                transition: "left 0.25s",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#111827",
+                color: "#ffffff",
+                fontWeight: 700,
+                cursor: "pointer",
+                opacity: saving ? 0.7 : 1,
               }}
-            />
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </button>
+
+            <button
+              onClick={onLogout}
+              style={{
+                padding: "12px 16px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                background: "#ffffff",
+                color: "#111827",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Log out
+            </button>
           </div>
-        </div>
-        <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap" }}>
-          <button
-            onClick={save}
-            style={{
-              background: "#1a1410",
-              color: "#f5f0e8",
-              border: "none",
-              padding: "0.75rem 1.5rem",
-              fontFamily: "'DM Mono',monospace",
-              fontSize: "0.78rem",
-              cursor: "pointer",
-              borderRadius: "2px",
-            }}
-          >
-            {saved ? "Saved ✓" : "Save changes"}
-          </button>
-          <button
-            onClick={onLogout}
-            style={{
-              background: "transparent",
-              color: "#c0392b",
-              border: "1px solid rgba(192,57,43,0.3)",
-              padding: "0.75rem 1.5rem",
-              fontFamily: "'DM Mono',monospace",
-              fontSize: "0.78rem",
-              cursor: "pointer",
-              borderRadius: "2px",
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-      </main>
-    </div>
+
+          {message && (
+            <p
+              style={{
+                marginTop: "14px",
+                color: message.includes("Could not") ? "#b91c1c" : "#166534",
+              }}
+            >
+              {message}
+            </p>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
-
-
-export { Settings };
