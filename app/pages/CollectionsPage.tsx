@@ -1,8 +1,22 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { User, Entry, Collection, Page } from "../types";
-import { MOODS, MOOD_LABELS, COLLECTION_COLORS, COLLECTION_EMOJIS, SAMPLE_ENTRIES } from "../constants";
-import { storage, fmtDate, fmtShort, excerpt, uid, streakCount, isoDay } from "../utils";
+import {
+  MOODS,
+  MOOD_LABELS,
+  COLLECTION_COLORS,
+  COLLECTION_EMOJIS,
+  SAMPLE_ENTRIES,
+} from "../constants";
+import {
+  storage,
+  fmtDate,
+  fmtShort,
+  excerpt,
+  uid,
+  streakCount,
+  isoDay,
+} from "../utils";
 import { Logo } from "../components/Logo";
 import { Avatar } from "../components/Avatar";
 import { MoodPicker } from "../components/MoodPicker";
@@ -51,14 +65,12 @@ function CollectionsPage({
     onUpdateCollections(next);
     setNewName("");
     setShowNew(false);
-    _toast?.("Collection created ✓");
   };
   const deleteCollection = (id: string) => {
     const next = collections.filter((c) => c.id !== id);
     storage.set("folio_collections", next);
     onUpdateCollections(next);
     if (activeCollection === id) setActiveCollection(null);
-    _toast?.("Collection deleted");
   };
 
   const getEntries = (cid: string | null) =>
@@ -339,7 +351,6 @@ function CollectionsPage({
                     if (e.key === "Escape") setShowNew(false);
                   }}
                   style={{
-                    ...inputStyle,
                     marginBottom: "0.5rem",
                     fontSize: "0.78rem",
                     padding: "0.4rem 0.6rem",
@@ -626,6 +637,5 @@ function CollectionsPage({
     </div>
   );
 }
-
 
 export { CollectionsPage };
