@@ -1,8 +1,8 @@
 "use client";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { User, Entry, Collection, Page } from "./types";
-import { SAMPLE_ENTRIES } from "./constants";
-import { storage, uid } from "./utils";
+import { storage } from "./utils";
 import { Toast } from "./components/Toast";
 import { Landing } from "./pages/Landing";
 import { AuthPage } from "./pages/AuthPage";
@@ -13,9 +13,10 @@ import { Settings } from "./pages/Settings";
 import { CalendarPage } from "./pages/CalendarPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CollectionsPage } from "./pages/CollectionsPage";
+import { getCurrentUser, logoutUser } from "./auth";
+import { fetchEntries, addEntry, updateEntry, deleteEntry } from "./functions";
 
-// ─── App Shell ─────────────────────────────────────────────
-export default function App() {
+export default function Home() {
   const [page, setPage] = useState<Page>("landing");
   const [user, setUser] = useState<User | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -26,50 +27,149 @@ export default function App() {
   const toastRef = useRef<(m: string, t?: "ok" | "err") => void>(() => {});
 
   useEffect(() => {
-    const e: Entry[] = storage.get("folio_entries") || [];
-    const c: Collection[] = storage.get("folio_collections") || [];
-    setEntries(e);
-    setCollections(c);
-    const cid = storage.get("folio_current");
-    if (cid) {
-      const users: User[] = storage.get("folio_users") || [];
-      const u = users.find((u: User) => u.id === cid);
-      if (u) {
-        setUser(u);
+    const init = async () => {
+      try {
+        const current = await getCurrentUser();
+
+        if (!current) {
+          setPage("landing");
+          return;
+        }
+
+        const appUser: User = {
+          id: current.$id,
+          name: current.name || current.email.split("@")[0],
+          email: current.email,
+          avatar: "",
+          password: "",
+          notifications: true,
+        };
+
+        setUser(appUser);
         setPage("dashboard");
+
+        const docs = await fetchEntries(appUser.id);
+
+        const mapped: Entry[] = docs.map((doc) => {
+          const normalizedCollectionId =
+            doc.collectionId == null ? undefined : doc.collectionId;
+
+          return {
+            id: doc.$id,
+            userId: doc.userId,
+            title: doc.title,
+            content: doc.content,
+            mood: doc.mood,
+            tags: doc.tags ?? [],
+            createdAt: doc.$createdAt,
+            updatedAt: doc.$updatedAt,
+            collectionId: normalizedCollectionId,
+          };
+        });
+
+        setEntries(mapped);
+      } catch (error) {
+        console.error("Init error:", error);
+        setUser(null);
+        setPage("landing");
       }
-    }
+
+      const savedCollections: Collection[] =
+        storage.get("folio_collections") || [];
+      setCollections(savedCollections);
+    };
+
+    init();
   }, []);
 
-  const saveEntry = (entry: Entry) => {
-    setEntries((prev) => {
-      const next = prev.find((e) => e.id === entry.id)
-        ? prev.map((e) => (e.id === entry.id ? entry : e))
-        : [entry, ...prev];
-      storage.set("folio_entries", next);
-      return next;
+  const refreshEntries = async (userId: string) => {
+    const docs = await fetchEntries(userId);
+
+    const mapped: Entry[] = docs.map((doc) => {
+      const normalizedCollectionId =
+        doc.collectionId == null ? undefined : doc.collectionId;
+
+      return {
+        id: doc.$id,
+        userId: doc.userId,
+        title: doc.title,
+        content: doc.content,
+        mood: doc.mood,
+        tags: doc.tags ?? [],
+        createdAt: doc.$createdAt,
+        updatedAt: doc.$updatedAt,
+        collectionId: normalizedCollectionId,
+      };
     });
-    toastRef.current?.("Entry saved ✓");
+
+    setEntries(mapped);
   };
-  const deleteEntry = (id: string) => {
-    setEntries((prev) => {
-      const next = prev.filter((e) => e.id !== id);
-      storage.set("folio_entries", next);
-      return next;
-    });
+
+  const saveEntry = async (entry: Entry) => {
+    try {
+      if (entry.id && entries.find((e) => e.id === entry.id)) {
+        await updateEntry(entry.id, {
+          title: entry.title,
+          content: entry.content,
+          mood: entry.mood,
+          tags: entry.tags,
+          collectionId: entry.collectionId,
+        });
+      } else {
+        await addEntry({
+          userId: user?.id || "",
+          title: entry.title,
+          content: entry.content,
+          mood: entry.mood,
+          tags: entry.tags,
+          collectionId: entry.collectionId,
+        });
+      }
+
+      if (user) {
+        await refreshEntries(user.id);
+      }
+
+      toastRef.current?.("Entry saved ✓");
+    } catch (error) {
+      console.error("Save entry error:", error);
+      toastRef.current?.("Could not save entry", "err");
+    }
+  };
+
+  const deleteEntryById = async (id: string) => {
+    try {
+      await deleteEntry(id);
+
+      if (user) {
+        await refreshEntries(user.id);
+      }
+
+      setPage("dashboard");
+      toastRef.current?.("Entry deleted");
+    } catch (error) {
+      console.error("Delete entry error:", error);
+      toastRef.current?.("Could not delete entry", "err");
+    }
+  };
+
+  const handleAuth = async (nextUser: User) => {
+    setUser(nextUser);
     setPage("dashboard");
-    toastRef.current?.("Entry deleted");
+    await refreshEntries(nextUser.id);
   };
-  const handleAuth = (u: User) => {
-    setUser(u);
-    setPage("dashboard");
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } finally {
+      setUser(null);
+      setEntries([]);
+      setPage("landing");
+    }
   };
-  const handleLogout = () => {
-    storage.set("folio_current", null);
-    setUser(null);
-    setPage("landing");
-  };
-  const navTo = (p: Page) => {
+
+  const navTo = (nextPage: Page) => {
     if (
       [
         "dashboard",
@@ -78,44 +178,49 @@ export default function App() {
         "calendar",
         "analytics",
         "collections",
-      ].includes(p) &&
+      ].includes(nextPage) &&
       !user
     ) {
       setAuthMode("login");
       setPage("login");
       return;
     }
-    setPage(p);
+
+    setPage(nextPage);
   };
+
   const regToast = useCallback((fn: (m: string, t?: "ok" | "err") => void) => {
     toastRef.current = fn;
   }, []);
+
   const detailEntry = entries.find((e) => e.id === detailId) || null;
 
   return (
     <>
       {page === "landing" && (
         <Landing
-          onNav={(p) => {
-            if (p === "signup" || p === "login") {
-              setAuthMode(p as "login" | "signup");
+          onNav={(nextPage) => {
+            if (nextPage === "signup" || nextPage === "login") {
+              setAuthMode(nextPage as "login" | "signup");
             }
-            setPage(p);
+            setPage(nextPage);
           }}
         />
       )}
+
       {(page === "login" || page === "signup") && (
         <AuthPage
           mode={authMode}
-          onNav={(p) => {
-            if (p === "signup" || p === "login") {
-              setAuthMode(p as "login" | "signup");
+          onNav={(nextPage) => {
+            if (nextPage === "signup" || nextPage === "login") {
+              setAuthMode(nextPage as "login" | "signup");
             }
-            setPage(p);
+            setPage(nextPage);
           }}
           onAuth={handleAuth}
         />
       )}
+
       {page === "dashboard" && user && (
         <Dashboard
           user={user}
@@ -133,6 +238,7 @@ export default function App() {
           onLogout={handleLogout}
         />
       )}
+
       {page === "editor" && user && (
         <Editor
           user={user}
@@ -144,6 +250,7 @@ export default function App() {
           onBack={() => setPage(editId && detailId ? "detail" : "dashboard")}
         />
       )}
+
       {page === "detail" && detailEntry && (
         <Detail
           entry={detailEntry}
@@ -153,19 +260,21 @@ export default function App() {
             setEditId(detailEntry.id);
             setPage("editor");
           }}
-          onDelete={() => deleteEntry(detailEntry.id)}
+          onDelete={() => deleteEntryById(detailEntry.id)}
         />
       )}
+
       {page === "settings" && user && (
         <Settings
           user={user}
-          onUpdate={(u) => {
-            setUser(u);
+          onUpdate={(updatedUser) => {
+            setUser(updatedUser);
           }}
           onBack={() => setPage("dashboard")}
           onLogout={handleLogout}
         />
       )}
+
       {page === "calendar" && user && (
         <CalendarPage
           user={user}
@@ -181,6 +290,7 @@ export default function App() {
           }}
         />
       )}
+
       {page === "analytics" && user && (
         <AnalyticsPage
           user={user}
@@ -192,14 +302,16 @@ export default function App() {
           }}
         />
       )}
+
       {page === "collections" && user && (
         <CollectionsPage
           user={user}
           entries={entries}
           collections={collections}
           onNav={navTo}
-          onUpdateCollections={(c) => {
-            setCollections(c);
+          onUpdateCollections={(nextCollections) => {
+            setCollections(nextCollections);
+            storage.set("folio_collections", nextCollections);
           }}
           onSelectEntry={(id) => {
             setDetailId(id);
