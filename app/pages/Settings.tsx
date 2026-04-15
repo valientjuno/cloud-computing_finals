@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { User } from "../types";
 
 type SettingsProps = {
@@ -17,7 +17,7 @@ export function Settings({ user, onUpdate, onBack, onLogout }: SettingsProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "10px",
@@ -27,14 +27,14 @@ export function Settings({ user, onUpdate, onBack, onLogout }: SettingsProps) {
     outline: "none",
   };
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     display: "block",
     marginBottom: "6px",
     fontWeight: 600,
     color: "#111827",
   };
 
-  const sectionStyle: React.CSSProperties = {
+  const sectionStyle: CSSProperties = {
     background: "#ffffff",
     border: "1px solid #e5e7eb",
     borderRadius: "16px",
