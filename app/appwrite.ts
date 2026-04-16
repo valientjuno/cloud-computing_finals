@@ -15,4 +15,5 @@ const client = new Client().setEndpoint(endpoint).setProject(projectId);
 const account = new Account(client);
 const tablesDB = new TablesDB(client);
 
+console.log("APPWRITE ENDPOINT:", endpoint);
 export { client, account, tablesDB, databaseId, tableId };
