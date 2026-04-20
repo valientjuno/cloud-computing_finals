@@ -1,5 +1,5 @@
 import { ID, Permission, Query, Role, type Models } from "appwrite";
-import { databaseId, tableId, tablesDB } from "./appwrite";
+import { DATABASE_ID, TABLE_ID, tablesDB } from "./appwrite";
 
 export interface AppwriteEntryRow extends Models.Row {
   userId: string;
@@ -31,8 +31,8 @@ export async function fetchEntries(
   userId: string,
 ): Promise<AppwriteEntryRow[]> {
   const res = await tablesDB.listRows<AppwriteEntryRow>({
-    databaseId,
-    tableId,
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
     queries: [Query.equal("userId", userId), Query.orderDesc("$createdAt")],
   });
 
@@ -41,8 +41,8 @@ export async function fetchEntries(
 
 export async function addEntry(data: CreateEntryInput) {
   return await tablesDB.createRow({
-    databaseId,
-    tableId,
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
     rowId: ID.unique(),
     data: {
       userId: data.userId,
@@ -53,7 +53,7 @@ export async function addEntry(data: CreateEntryInput) {
       collectionId: data.collectionId ?? null,
     },
     permissions: [
-      Permission.read(Role.any()),
+      Permission.read(Role.user(data.userId)),
       Permission.update(Role.user(data.userId)),
       Permission.delete(Role.user(data.userId)),
     ],
@@ -62,8 +62,8 @@ export async function addEntry(data: CreateEntryInput) {
 
 export async function updateEntry(id: string, data: UpdateEntryInput) {
   return await tablesDB.updateRow({
-    databaseId,
-    tableId,
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
     rowId: id,
     data: {
       ...(data.title !== undefined ? { title: data.title } : {}),
@@ -79,8 +79,8 @@ export async function updateEntry(id: string, data: UpdateEntryInput) {
 
 export async function deleteEntry(id: string) {
   return await tablesDB.deleteRow({
-    databaseId,
-    tableId,
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
     rowId: id,
   });
 }

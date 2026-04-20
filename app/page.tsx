@@ -33,6 +33,9 @@ export default function Home() {
 
         if (!current) {
           setPage("landing");
+          const savedCollections: Collection[] =
+            storage.get("folio_collections") || [];
+          setCollections(savedCollections);
           return;
         }
 
@@ -49,7 +52,6 @@ export default function Home() {
         setPage("dashboard");
 
         const docs = await fetchEntries(appUser.id);
-
         const mapped: Entry[] = docs.map((doc) => {
           const normalizedCollectionId =
             doc.collectionId == null ? undefined : doc.collectionId;
@@ -68,15 +70,19 @@ export default function Home() {
         });
 
         setEntries(mapped);
+
+        const savedCollections: Collection[] =
+          storage.get("folio_collections") || [];
+        setCollections(savedCollections);
       } catch (error) {
         console.error("Init error:", error);
         setUser(null);
         setPage("landing");
-      }
 
-      const savedCollections: Collection[] =
-        storage.get("folio_collections") || [];
-      setCollections(savedCollections);
+        const savedCollections: Collection[] =
+          storage.get("folio_collections") || [];
+        setCollections(savedCollections);
+      }
     };
 
     init();
@@ -107,16 +113,20 @@ export default function Home() {
 
   const saveEntry = async (entry: Entry) => {
     try {
-      if (entry.id && entries.find((e) => e.id === entry.id)) {
-        await updateEntry(entry.id, {
+      let savedRow: any;
+
+      if (entry.id && entries.some((e) => e.id === entry.id)) {
+        savedRow = await updateEntry(entry.id, {
           title: entry.title,
           content: entry.content,
           mood: entry.mood,
           tags: entry.tags,
           collectionId: entry.collectionId,
         });
+
+        setEditId(entry.id);
       } else {
-        await addEntry({
+        savedRow = await addEntry({
           userId: user?.id || "",
           title: entry.title,
           content: entry.content,
@@ -124,6 +134,9 @@ export default function Home() {
           tags: entry.tags,
           collectionId: entry.collectionId,
         });
+
+        setEditId(savedRow.$id);
+        setDetailId(savedRow.$id);
       }
 
       if (user) {
@@ -145,6 +158,9 @@ export default function Home() {
         await refreshEntries(user.id);
       }
 
+      if (detailId === id) setDetailId(null);
+      if (editId === id) setEditId(null);
+
       setPage("dashboard");
       toastRef.current?.("Entry deleted");
     } catch (error) {
@@ -165,6 +181,8 @@ export default function Home() {
     } finally {
       setUser(null);
       setEntries([]);
+      setEditId(null);
+      setDetailId(null);
       setPage("landing");
     }
   };

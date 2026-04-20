@@ -1,14 +1,10 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { User, Entry, Collection, Page } from "../types";
-import { MOODS, MOOD_LABELS, COLLECTION_COLORS, COLLECTION_EMOJIS, SAMPLE_ENTRIES } from "../constants";
-import { storage, fmtDate, fmtShort, excerpt, uid, streakCount, isoDay } from "../utils";
-import { Logo } from "../components/Logo";
-import { Avatar } from "../components/Avatar";
+import { fmtDate } from "../utils";
 import { MoodPicker } from "../components/MoodPicker";
 import { TagInput } from "../components/TagInput";
-import { EntryCard } from "../components/EntryCard";
-import { AppNav } from "../components/AppNav";
 
 function Editor({
   user,
@@ -23,7 +19,7 @@ function Editor({
   entries: Entry[];
   collections: Collection[];
   editId: string | null;
-  onSave: (e: Entry) => void;
+  onSave: (e: Entry) => Promise<void>;
   onNav: (p: Page) => void;
   onBack: () => void;
 }) {
@@ -41,14 +37,18 @@ function Editor({
   const [wordCount, setWordCount] = useState(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const myCollections = collections.filter((c) => c.userId === user.id);
+
   useEffect(() => {
     setWordCount(content.trim() ? content.trim().split(/\s+/).length : 0);
   }, [content]);
-  const save = useCallback(() => {
+
+  const save = useCallback(async () => {
     if (!content.trim() && !title.trim()) return;
+
     setSaveStatus("saving");
+
     const entry: Entry = {
-      id: editId || uid(),
+      id: existing?.id || editId || "",
       userId: user.id,
       title: title || "Untitled",
       content,
@@ -58,11 +58,14 @@ function Editor({
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    setTimeout(() => {
-      onSave(entry);
+
+    try {
+      await onSave(entry);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
-    }, 300);
+    } catch {
+      setSaveStatus("idle");
+    }
   }, [
     title,
     content,
@@ -70,29 +73,28 @@ function Editor({
     tags,
     collectionId,
     editId,
-    user,
+    user.id,
     existing,
     onSave,
   ]);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (content.trim() || title.trim()) save();
-    }, 30000);
-    return () => clearTimeout(t);
-  }, [content, title, save]);
+
   const applyFmt = (before: string, after: string) => {
     const ta = taRef.current;
     if (!ta) return;
-    const s = ta.selectionStart,
-      e = ta.selectionEnd,
-      sel = content.slice(s, e);
+
+    const s = ta.selectionStart;
+    const e = ta.selectionEnd;
+    const sel = content.slice(s, e);
     const nc = content.slice(0, s) + before + sel + after + content.slice(e);
+
     setContent(nc);
+
     setTimeout(() => {
       ta.focus();
       ta.setSelectionRange(s + before.length, e + before.length);
     }, 0);
   };
+
   const prompts = [
     "What made you pause today?",
     "Describe a moment that surprised you.",
@@ -100,9 +102,11 @@ function Editor({
     "What would you tell your past self?",
     "What's taking up the most space in your mind?",
   ];
+
   const [prompt] = useState(
     prompts[Math.floor(Math.random() * prompts.length)],
   );
+
   return (
     <div
       style={{
@@ -141,6 +145,7 @@ function Editor({
           >
             ← Back
           </button>
+
           <span
             style={{
               fontFamily: "'DM Mono',monospace",
@@ -150,6 +155,7 @@ function Editor({
           >
             |
           </span>
+
           <span
             style={{
               fontFamily: "'DM Mono',monospace",
@@ -159,6 +165,7 @@ function Editor({
           >
             {wordCount} words
           </span>
+
           {myCollections.length > 0 && (
             <select
               value={collectionId || ""}
@@ -184,6 +191,7 @@ function Editor({
             </select>
           )}
         </div>
+
         <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
           {saveStatus !== "idle" && (
             <span
@@ -196,8 +204,9 @@ function Editor({
               {saveStatus === "saving" ? "Saving…" : "Saved ✓"}
             </span>
           )}
+
           <button
-            onClick={save}
+            onClick={() => void save()}
             style={{
               background: "#1a1410",
               color: "#f5f0e8",
@@ -214,6 +223,7 @@ function Editor({
           </button>
         </div>
       </nav>
+
       <main
         style={{
           flex: 1,
@@ -235,6 +245,7 @@ function Editor({
         >
           {fmtDate(existing?.createdAt || new Date().toISOString())}
         </p>
+
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -253,6 +264,7 @@ function Editor({
             boxSizing: "border-box",
           }}
         />
+
         <div
           style={{
             display: "flex",
@@ -289,6 +301,7 @@ function Editor({
               {t.label}
             </button>
           ))}
+
           <div
             style={{
               width: 1,
@@ -297,11 +310,14 @@ function Editor({
               margin: "0 0.2rem",
             }}
           />
+
           <MoodPicker value={mood} onChange={setMood} />
+
           <div style={{ marginLeft: "auto" }}>
             <TagInput tags={tags} onChange={setTags} />
           </div>
         </div>
+
         {!content && (
           <p
             style={{
@@ -316,11 +332,11 @@ function Editor({
             {prompt}
           </p>
         )}
+
         <textarea
           ref={taRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          onBlur={save}
           placeholder="Start writing…"
           style={{
             width: "100%",
@@ -340,6 +356,5 @@ function Editor({
     </div>
   );
 }
-
 
 export { Editor };
