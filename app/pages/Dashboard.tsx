@@ -219,7 +219,7 @@ function Dashboard({
                 color: "var(--ink)",
               }}
             >
-              {greet()}, {user.name}.
+              {greet()}, {user.name}
             </h1>
 
             <div
