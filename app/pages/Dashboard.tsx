@@ -1,8 +1,23 @@
 "use client";
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { User, Entry, Collection, Page } from "../types";
-import { MOODS, MOOD_LABELS, COLLECTION_COLORS, COLLECTION_EMOJIS, SAMPLE_ENTRIES } from "../constants";
-import { storage, fmtDate, fmtShort, excerpt, uid, streakCount, isoDay } from "../utils";
+import {
+  MOODS,
+  MOOD_LABELS,
+  COLLECTION_COLORS,
+  COLLECTION_EMOJIS,
+  SAMPLE_ENTRIES,
+} from "../constants";
+import {
+  storage,
+  fmtDate,
+  fmtShort,
+  excerpt,
+  uid,
+  streakCount,
+  isoDay,
+} from "../utils";
 import { Logo } from "../components/Logo";
 import { Avatar } from "../components/Avatar";
 import { MoodPicker } from "../components/MoodPicker";
@@ -33,9 +48,11 @@ function Dashboard({
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
+
   const streak = streakCount(entries, user.id);
   const [searchQ, setSearchQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
   const filtered = searchQ
     ? myEntries.filter(
         (e) =>
@@ -44,6 +61,7 @@ function Dashboard({
           e.tags.some((t) => t.includes(searchQ.toLowerCase())),
       )
     : myEntries;
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -54,12 +72,14 @@ function Dashboard({
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
+
   const greet = () => {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
     if (h < 18) return "Good afternoon";
     return "Good evening";
   };
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)" }}>
       <AppNav
@@ -74,6 +94,7 @@ function Dashboard({
         onNewEntry={onNewEntry}
         activeMenuItems={["dashboard"]}
       />
+
       {searchOpen && (
         <div
           style={{
@@ -130,6 +151,7 @@ function Dashboard({
                   No entries found for "{searchQ}"
                 </p>
               )}
+
               {filtered.slice(0, 8).map((e) => (
                 <div
                   key={e.id}
@@ -178,6 +200,7 @@ function Dashboard({
           </div>
         </div>
       )}
+
       <main style={{ maxWidth: 760, margin: "0 auto", padding: "3rem 5%" }}>
         <div style={{ marginBottom: "2.5rem" }}>
           <div
@@ -196,8 +219,9 @@ function Dashboard({
                 color: "var(--ink)",
               }}
             >
-              {greet()}, {user.name.split(" ")[0]}.
+              {greet()}, {user.name}.
             </h1>
+
             <div
               style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}
             >
@@ -216,6 +240,7 @@ function Dashboard({
                   🔥 {streak} day{streak !== 1 ? "s" : ""}
                 </div>
               )}
+
               <button
                 onClick={() => setSearchOpen(true)}
                 style={{
@@ -233,6 +258,7 @@ function Dashboard({
               </button>
             </div>
           </div>
+
           <p
             style={{
               fontFamily: "'DM Mono',monospace",
@@ -248,6 +274,7 @@ function Dashboard({
             })}
           </p>
         </div>
+
         {myEntries.length === 0 && (
           <div
             style={{
@@ -298,6 +325,7 @@ function Dashboard({
             </button>
           </div>
         )}
+
         {myEntries.length > 0 && (
           <div style={{ display: "grid", gap: "1rem" }}>
             {filtered.map((e) => (
@@ -307,6 +335,7 @@ function Dashboard({
                 onClick={() => onSelectEntry(e.id)}
               />
             ))}
+
             {searchQ && filtered.length === 0 && (
               <div
                 style={{
@@ -326,6 +355,5 @@ function Dashboard({
     </div>
   );
 }
-
 
 export { Dashboard };
