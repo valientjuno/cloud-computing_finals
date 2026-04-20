@@ -1,173 +1,52 @@
-# Personal Journal App with Appwrite
+Folio Journal
+A reflective journaling web app built with Next.js and Appwrite. Folio Journal lets users create an account, write and edit journal entries, organize entries into collections, review activity in a calendar view, and see simple writing analytics. The live deployment is available at https://myfolio.appwrite.network/.
 
-## Project Description
+Live Demo
+https://myfolio.appwrite.network/
 
-This is a full-stack Personal Journal web application built with Next.js, TypeScript, and Appwrite. The app allows users to create an account, log in securely, and manage personal journal entries with full CRUD functionality. Appwrite handles authentication and database services, while the frontend communicates directly with Appwrite through the SDK. [web:115][web:191]
+Features
+User authentication with Appwrite email/password accounts and sessions
 
-This project demonstrates full-stack development with a Backend-as-a-Service workflow, including user authentication, database integration, frontend state management, and deployment preparation. [web:115][web:379]
+Create, read, update, and delete journal entries
 
----
+Rich journal editor with mood picker, tags, and collection assignment
 
-## Technologies Used
+Entry detail view for reviewing and deleting saved entries
 
-- Next.js (App Router)
-- TypeScript
-- React
-- Appwrite
-- CSS
+Dashboard view for browsing saved entries
 
----
+Calendar view with journal activity history
 
-## Features
+Analytics page for reviewing writing activity trends
 
-### Authentication
+Collections page for organizing entries into notebook-style groups
 
-- User signup with email and password
-- User login
-- User logout
-- Session-based authentication with Appwrite Accounts [web:115]
+Toast feedback for save and delete operations
 
-### Journal Entry Management (CRUD)
+Technologies Used
+Frontend
+Next.js (App Router)
 
-- Create journal entries
-- View personal journal entries
-- Edit and update entries
-- Delete entries
-- Persist journal data with Appwrite TablesDB rows instead of browser-only storage [web:158][web:191]
+React
 
-### Entry Details
+TypeScript
 
-Each journal entry includes:
+CSS / global styling
 
-- Title
-- Content
-- Mood
-- Created date
-- Updated date
-- User ID
-- Optional collection/notebook ID for organization
+Backend / Cloud Services
+Appwrite Authentication
 
-### Additional Views
+Appwrite Databases / TablesDB for journal entry storage
 
-- Dashboard for browsing entries
-- Entry detail view
-- Collections view
-- Analytics view
-- Calendar view for journal history
+Appwrite Sites for hosting and deployment
 
----
+Tooling
+npm
 
-## Appwrite Services Used
+GitHub
 
-- **Authentication** for email/password account login and session management [web:115]
-- **TablesDB** for storing and querying journal entry rows [web:158][web:191]
-
----
-
-## Local Setup Instructions
-
-### 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd cloud-computing_finals
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Create environment variables
-
-Create a file named `.env.local` in the root of the project and add:
-
-```env
-NEXT_PUBLIC_APPWRITE_PROJECT_ID=69d55d8a000ad7a2c915
-NEXT_PUBLIC_APPWRITE_PROJECT_NAME=journal-keep
-NEXT_PUBLIC_APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1
-NEXT_PUBLIC_APPWRITE_DATABASE_ID=69d55fc500021282d087
-NEXT_PUBLIC_APPWRITE_TABLE_ID=records
-```
-
-These same variables should also be added to your production hosting provider during deployment. Vercel supports adding project environment variables directly in the project settings. [web:412][web:373]
-
-### 4. Run the development server
-
-```bash
-npm run dev
-```
-
-Open your browser and go to:
-
-```text
-http://localhost:3000
-```
-
----
-
-## Appwrite Configuration
-
-### Database Setup
-
-Create:
-
-- 1 Appwrite database
-- 1 Appwrite table for journal records
-
-Appwrite’s newer database model uses **tables**, **rows**, and **columns** rather than the older **collections** and **documents** terminology, while remaining conceptually similar. [web:59][web:158]
-
-### Required Columns
-
-Add these fields to the `records` table:
-
-- `userId` (string, required)
-- `title` (string, required)
-- `content` (string or text, required)
-- `mood` (string, required)
-- `tags` (optional array or compatible field type)
-- `collectionId` (optional string)
-
-Make sure the `userId` string length is large enough to store Appwrite user IDs. Appwrite validates row data against the table schema and rejects unknown fields or values that exceed configured limits. [web:297][web:283]
-
-### Platform Setup
-
-Add the following Web App platform URL in Appwrite for local development:
-
-```text
-http://localhost:3000
-```
-
-After deployment, also add your production domain or Vercel hostname as a Web App platform so authentication and API requests work correctly in production. [web:115][web:378]
-
----
-
-## API / Function Documentation
-
-This project uses the Appwrite Web SDK directly in the frontend.
-
-### Authentication Functions
-
-- Create user account
-- Create email/password login session
-- Get current logged-in user
-- Logout by deleting the current session
-
-### Journal Entry Functions
-
-- Create row
-- List rows for the current user
-- Update row
-- Delete row
-
-All journal operations are intended to be scoped to the authenticated user through Appwrite permissions and user-based filtering. [web:191][web:115]
-
----
-
-## Project Structure
-
-```text
+Project Structure
+text
 app/
 ├── page.tsx
 ├── layout.tsx
@@ -176,85 +55,157 @@ app/
 ├── auth.ts
 ├── functions.ts
 ├── types/
-│   └── index.ts
-├── utils/
-│   └── index.ts
 ├── components/
-│   ├── Toast.tsx
-│   ├── Logo.tsx
-│   ├── Avatar.tsx
-│   ├── MoodPicker.tsx
-│   ├── TagInput.tsx
-│   ├── EntryCard.tsx
-│   └── AppNav.tsx
 └── pages/
-    ├── Landing.tsx
-    ├── AuthPage.tsx
-    ├── Dashboard.tsx
-    ├── Editor.tsx
-    ├── Detail.tsx
-    ├── Settings.tsx
-    ├── CalendarPage.tsx
-    ├── AnalyticsPage.tsx
-    └── CollectionsPage.tsx
-```
+Local Setup
+Prerequisites
+Node.js 18 or newer
 
----
+npm
 
-## Deployment
+An Appwrite project
 
-This project can be deployed using:
+1. Clone the repository
+   bash
+   git clone <https://github.com/valientjuno/cloud-computing_finals
+   cd cloud-computing_finals
+2. Install dependencies
+   bash
+   npm install
+3. Create environment variables
+   Create a .env.local file in the project root and add your Appwrite values:
 
-- **Vercel** (recommended for simplicity with Next.js) [web:379][web:412]
+text
+NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
+NEXT_PUBLIC_APPWRITE_TABLE_ID=your_table_id
+If your project uses different variable names in app/appwrite.ts, use the exact names required there.
 
-### Deployment Steps
+4. Configure Appwrite
+   In Appwrite, make sure you have:
 
-1. Push the project to GitHub. [web:377]
-2. Import the repository into Vercel. [web:377]
-3. Add the same environment variables from `.env.local` into Vercel project settings. [web:412][web:373]
-4. Deploy the application. [web:377]
-5. Add the deployed Vercel domain as a Web App platform in Appwrite. [web:115][web:378]
+A Web platform for your local URL, such as http://localhost:3000
 
-If environment variables are changed after the first deployment, redeploy the project so the new values are included in the production build. [web:412]
+A Web platform or site/domain configured for your deployed URL
 
----
+Authentication enabled for email/password login
 
-## Favicon
+A database/table or collection for journal entries
 
-To avoid `/favicon.ico` 404 errors, add a favicon file to:
+Matching required fields for each entry record, such as title, content, mood, tags, userId, and collectionId if used
 
-```text
-public/favicon.ico
-```
+Correct permissions so authenticated users can create, read, update, and delete their own entries
 
-Next.js App Router also supports metadata icon files directly in the `app/` directory. [web:397][web:426]
+5. Run the app locally
+   bash
+   npm run dev
+   Then open:
 
----
+text
+http://localhost:3000
 
-## Notes
+6. Create a production build locally
+   bash
+   npm run build
+   npm start
+   API / Backend Documentation
+   This project uses Appwrite instead of a custom Express or Node REST API. The frontend communicates with Appwrite through helper functions in app/auth.ts, app/appwrite.ts, and app/functions.ts.
 
-- A `401` request to `/account` before login is typically expected because the app checks for an existing session on startup. [web:228][web:390]
-- Appwrite may show a warning about localStorage session handling when using the shared cloud endpoint; this is informational and can later be improved with a custom Appwrite domain. [web:394][web:388]
-- The project was refactored into a cleaner file and folder structure to separate pages, components, types, utility functions, and Appwrite logic.
+Authentication Functions
+getCurrentUser()
+Returns the currently logged-in Appwrite account if a session exists.
 
----
+registerUser(...)
+Creates a new Appwrite account for a user.
 
-## Future Improvements
+loginUser(...)
+Creates an email/password session for an existing user.
 
-- Search journal entries
-- Filter by mood
-- Dark mode UI
-- Rich text editor
-- Pagination or infinite scroll
-- Move collection management fully into Appwrite if desired
-- Add production custom domain support for cleaner Appwrite session handling [web:388]
+logoutUser()
+Ends the current user session.
 
----
+Entry Data Functions
+fetchEntries(userId)
+Loads journal entries for a specific user from Appwrite.
 
-## Scripts
+Used by: dashboard, refresh flow after login, and page reload state restoration.
 
-```bash
-npm run dev
-npm run build
-npm run start
-```
+addEntry(data)
+Creates a new journal entry row/document in Appwrite.
+
+Expected fields:
+
+userId
+
+title
+
+content
+
+mood
+
+tags
+
+collectionId (optional)
+
+updateEntry(id, data)
+Updates an existing journal entry in Appwrite using its saved row/document ID.
+
+deleteEntry(id)
+Deletes an existing journal entry from Appwrite.
+
+Typical User Flow
+User signs up or logs in.
+
+The app checks for an existing Appwrite session.
+
+The dashboard loads the user's saved entries from Appwrite.
+
+The user creates a new entry in the editor.
+
+The app saves the first entry to Appwrite and stores the returned row ID.
+
+Future saves update the same entry instead of creating duplicates.
+
+The user can view, edit, and delete entries from the dashboard or detail page.
+
+Deployment Notes
+This project is deployed through Appwrite Sites:
+
+Live URL: https://myfolio.appwrite.network/
+
+To keep deployment working correctly:
+
+Add all required NEXT*PUBLIC*\* environment variables in the Appwrite Sites deployment settings
+
+Make sure the site/domain is allowed in Appwrite platform settings if needed for auth and API access
+
+Verify database/table permissions in production
+
+Test login, create entry, edit entry, refresh, and delete entry after each deployment
+
+Appwrite Sites supports deployed domains and HTTPS-enabled Appwrite network domains for production usage.
+
+Current Limitations / Notes
+Some non-entry data, such as collections, may still rely on local browser storage depending on the current project version
+
+If collections are stored locally, they may not sync across devices or browsers
+
+The project currently focuses on Appwrite-backed authentication and journal entry CRUD as its primary backend functionality
+
+Submission Checklist
+Frontend project code in GitHub
+
+Backend integration through Appwrite
+
+Live deployed demo
+
+README with setup instructions
+
+README with backend/API usage notes
+
+Author
+Jesse Doake - Tooele Technical College Student
+
+License
+This project was created for a cloud computing course submission.
